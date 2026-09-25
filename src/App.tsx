@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { RealtimeProvider } from './contexts/RealtimeContext';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { OfflineBanner } from './components/common/OfflineBanner';
 import { Sidebar } from './components/common/Sidebar';
 import { Navbar } from './components/common/Navbar';
@@ -59,22 +60,24 @@ const MainLayout: React.FC = () => {
 
           {/* Main Content Body */}
           <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
-            {activeTab === 'dashboard' && (
-              role === 'admin' 
-                ? <AdminDashboard onNavigateTab={setActiveTab} /> 
-                : <StudentDashboard onNavigateTab={setActiveTab} />
-            )}
+            <ErrorBoundary>
+              {activeTab === 'dashboard' && (
+                role === 'admin' 
+                  ? <AdminDashboard onNavigateTab={setActiveTab} /> 
+                  : <StudentDashboard onNavigateTab={setActiveTab} />
+              )}
 
-            {activeTab === 'attendance' && <AttendanceView />}
-            {activeTab === 'timetable' && <TimetableSchedule />}
-            {activeTab === 'assignments' && <AssignmentList />}
-            {activeTab === 'exams' && <ExamCenter />}
-            {activeTab === 'materials' && <StudyMaterialHub />}
-            {activeTab === 'events' && <CampusEventsView />}
-            {activeTab === 'announcements' && <AnnouncementBoard />}
-            {activeTab === 'insights' && <PersonalizedStudentInsights onNavigateTab={setActiveTab} />}
-            {activeTab === 'ai' && <AICampusAssistant />}
-            {activeTab === 'admin' && <AdminManagementCenter />}
+              {activeTab === 'attendance' && <AttendanceView />}
+              {activeTab === 'timetable' && <TimetableSchedule />}
+              {activeTab === 'assignments' && <AssignmentList />}
+              {activeTab === 'exams' && <ExamCenter />}
+              {activeTab === 'materials' && <StudyMaterialHub />}
+              {activeTab === 'events' && <CampusEventsView />}
+              {activeTab === 'announcements' && <AnnouncementBoard />}
+              {activeTab === 'insights' && <PersonalizedStudentInsights onNavigateTab={setActiveTab} />}
+              {activeTab === 'ai' && <AICampusAssistant />}
+              {activeTab === 'admin' && <AdminManagementCenter />}
+            </ErrorBoundary>
           </main>
         </div>
       </div>
@@ -87,10 +90,13 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <RealtimeProvider>
-        <MainLayout />
-      </RealtimeProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <RealtimeProvider>
+          <MainLayout />
+        </RealtimeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
+
