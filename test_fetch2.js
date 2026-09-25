@@ -1,0 +1,1 @@
+fetch('https://smart-campus-companion-eaqtsfzgl-alageshwari2006s-projects.vercel.app/assets/index-D0x7yKug.js').then(r=>{console.log(r.status); return r.text()}).then(text=>console.log(text.substring(0,100)));
