@@ -24,60 +24,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    let authListenerCleanup: (() => void) | null = null;
+
     async function initAuth() {
       if (isSupabaseConfigured && supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const profile = await academicService.getProfile(session.user.id);
-          if (profile) {
-            setUser(profile);
-          } else {
-            // Fallback profile construction if metadata missing
-            const fallbackProfile: Profile = {
-              id: session.user.id,
-              email: session.user.email || '',
-              full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-              role: (session.user.user_metadata?.role as UserRole) || 'student',
-              department: 'Computer Science & Engineering',
-              year: '4th Year',
-              register_number: '21CS042'
-            };
-            setUser(fallbackProfile);
-          }
-        }
-        
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-          if (session?.user) {
-            const profile = await academicService.getProfile(session.user.id);
-            setUser(profile);
-          } else {
-            setUser(null);
-          }
-        });
+        try {
+          // First set up the auth state listener BEFORE checking the session
+          // This avoids a race condition where the session check fires before
+          // the listener is registered
+          const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session?.user) {
+              const profile = await academicService.getProfile(session.user.id);
+              if (profile) {
+                setUser(profile);
+              } else {
+                // Fallback profile construction if Supabase profile row missing
+                setUser({
+                  id: session.user.id,
+                  email: session.user.email || '',
+                  full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+                  role: (session.user.user_metadata?.role as UserRole) || 'student',
+                  department: 'Computer Science & Engineering',
+                  year: '4th Year',
+                  register_number: '21CS042'
+                });
+              }
+            } else {
+              // No session — check localStorage fallback for demo mode
+              const savedUserRaw = localStorage.getItem('scc_current_user_v1');
+              if (savedUserRaw) {
+                try { setUser(JSON.parse(savedUserRaw)); } catch { setUser(null); }
+              } else {
+                setUser(null);
+              }
+            }
+            setLoading(false);
+          });
 
-        setLoading(false);
-        return () => {
-          authListener.subscription.unsubscribe();
-        };
-      } else {
-        // Standalone / LocalStorage session initialization
-        const savedUserRaw = localStorage.getItem('scc_current_user_v1');
-        if (savedUserRaw) {
-          try {
-            setUser(JSON.parse(savedUserRaw));
-          } catch {
-            setUser(SEED_STUDENTS[0]);
-          }
-        } else {
-          // Default to student demo user for instant interactive preview
-          setUser(SEED_STUDENTS[0]);
-          localStorage.setItem('scc_current_user_v1', JSON.stringify(SEED_STUDENTS[0]));
+          authListenerCleanup = () => authListener.subscription.unsubscribe();
+
+          // Now check current session — this will trigger onAuthStateChange if a session exists
+          await supabase.auth.getSession();
+
+          // Safety timeout: if onAuthStateChange hasn't fired after 3s, unblock loading
+          const safetyTimer = setTimeout(() => setLoading(false), 3000);
+          authListenerCleanup = () => {
+            clearTimeout(safetyTimer);
+            authListener.subscription.unsubscribe();
+          };
+        } catch (err) {
+          console.error('[Auth] Supabase init error, falling back to local mode:', err);
+          // Fall through to local mode on any Supabase error
+          initLocalMode();
         }
-        setLoading(false);
+      } else {
+        initLocalMode();
       }
     }
 
+    function initLocalMode() {
+      // Standalone / LocalStorage session initialization
+      const savedUserRaw = localStorage.getItem('scc_current_user_v1');
+      if (savedUserRaw) {
+        try {
+          setUser(JSON.parse(savedUserRaw));
+        } catch {
+          // Corrupted data — reset to demo student
+          setUser(SEED_STUDENTS[0]);
+          localStorage.setItem('scc_current_user_v1', JSON.stringify(SEED_STUDENTS[0]));
+        }
+      } else {
+        // Default to student demo user for instant interactive preview
+        setUser(SEED_STUDENTS[0]);
+        localStorage.setItem('scc_current_user_v1', JSON.stringify(SEED_STUDENTS[0]));
+      }
+      setLoading(false);
+    }
+
     initAuth();
+
+    return () => {
+      if (authListenerCleanup) authListenerCleanup();
+    };
   }, []);
 
   const login = async (email: string, selectedRole: UserRole = 'student') => {
