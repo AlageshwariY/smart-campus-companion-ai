@@ -327,3 +327,117 @@ export const SEED_NOTIFICATIONS: NotificationItem[] = [
     created_at: new Date(Date.now() - 86400000).toISOString()
   }
 ];
+
+export const SEED_CAMPUS_DOCUMENTS = [
+  {
+    id: 'doc-1',
+    title: 'Academic Regulations & Examination Policy 2025-2026',
+    category: 'Regulation',
+    department: 'All',
+    content: `INSTITUTION ACADEMIC & ATTENDANCE REGULATIONS:
+1. Minimum Attendance: Students must maintain a minimum of 75% attendance in each course to be eligible for end-semester examinations. Students with attendance between 65% and 74% due to medical reasons must submit a verified medical certificate for condonation.
+2. Internal Assessment: Internal exams carry 40% weightage of the final course grade. Mid-semester exams are compulsory.
+3. Assignment Submissions: Assignments submitted past the due date will suffer a 10% grade penalty per day unless prior extension is approved by the course faculty.
+4. Hall Ticket Rules: Students must present their physical or digital smart ID card at the exam hall. Electronic gadgets except approved non-programmable calculators are strictly prohibited.`
+  },
+  {
+    id: 'doc-2',
+    title: 'Computer Science & Engineering Syllabus Handbook (Semester 7 & 8)',
+    category: 'Syllabus',
+    department: 'Computer Science & Engineering',
+    content: `CSE CURRICULUM SYLLABUS HIGHLIGHTS:
+1. CS8551 Database Management Systems: Relational Algebra, SQL Queries, ER Modeling, Normalization (1NF to 5NF, BCNF), Transaction Processing, ACID properties, Concurrency Control, Locking Protocols, B-Trees and B+ Trees.
+2. CS8591 Computer Networks: OSI 7-Layer Architecture, TCP/IP, IP Addressing & Subnetting, Routing Algorithms (OSPF, BGP), TCP Flow & Congestion Control, DNS, HTTP/HTTPS.
+3. CS8601 Artificial Intelligence & ML: Uninformed Search (BFS, DFS), Informed Search (A*), Knowledge Representation, Machine Learning Models (Linear Regression, SVM, Decision Trees, CNNs), Transformers & Generative AI.
+4. CS8651 Operating Systems: Process Synchronization, Semaphores, Deadlock Handling (Banker's Algorithm), Memory Virtualization, Page Replacement (LRU, FIFO), File Systems.`
+  },
+  {
+    id: 'doc-3',
+    title: 'Campus Placement & Career Development Guidelines 2026',
+    category: 'Placement',
+    department: 'All',
+    content: `CAMPUS PLACEMENT POLICY:
+1. Eligibility: Students with CGPA >= 7.0 and no active backlogs are eligible for Tier-1 technology companies (Google, Microsoft, Amazon, TCS Digital).
+2. Preparation Milestones: Students must complete a minimum of 150 Data Structures & Algorithms coding challenges, build 2 full-stack/AI capstone projects, and undergo 2 mock interviews.
+3. Resume Standards: Resumes must adhere to the standard single-page ATS-friendly template provided by the Placement Cell. Quantifiable metrics must be highlighted in project descriptions.`
+  },
+  {
+    id: 'doc-4',
+    title: 'Student Handbook & Campus Facilities Directory',
+    category: 'Handbook',
+    department: 'All',
+    content: `CAMPUS LOCATIONS & INFRASTRUCTURE GUIDE:
+1. Central Library: Located in Block A, 2nd Floor. Open Monday to Saturday 8:00 AM - 10:00 PM. Digital catalog access terminal available.
+2. Computer Science Labs: Advanced AI Lab (Room 402, Block C), DBMS Lab (Room 201, Block C), Network Security Lab (Room 305, Block C).
+3. Student Helpdesk: Located at Main Administration Block, Counter 4. Email: helpdesk@campus.edu.
+4. Campus Transport Shuttle: Departs every 30 minutes from Main Gate to Metro Station between 7:30 AM and 7:00 PM.`
+  }
+];
+
+export const SEED_FACULTY = [
+  {
+    id: 'fac-1',
+    name: 'Prof. Alan Turing',
+    department: 'Computer Science & Engineering',
+    designation: 'Professor & HOD (DB Research)',
+    email: 'turing@campus.edu',
+    phone: '+1 555-0111',
+    office_location: 'Block C, Room 301',
+    consultation_hours: 'Mon & Wed 2:00 PM - 4:00 PM'
+  },
+  {
+    id: 'fac-2',
+    name: 'Dr. Radia Perlman',
+    department: 'Computer Science & Engineering',
+    designation: 'Associate Professor',
+    email: 'perlman@campus.edu',
+    phone: '+1 555-0112',
+    office_location: 'Block C, Room 304',
+    consultation_hours: 'Tue & Thu 11:00 AM - 1:00 PM'
+  },
+  {
+    id: 'fac-3',
+    name: 'Prof. Geoffrey Hinton',
+    department: 'Computer Science & Engineering',
+    designation: 'Distinguished Professor (AI)',
+    email: 'hinton@campus.edu',
+    phone: '+1 555-0113',
+    office_location: 'Block C, Room 405',
+    consultation_hours: 'Friday 10:00 AM - 12:00 PM'
+  },
+  {
+    id: 'fac-4',
+    name: 'Dr. Linus Torvalds',
+    department: 'Computer Science & Engineering',
+    designation: 'Senior Systems Professor',
+    email: 'linus@campus.edu',
+    phone: '+1 555-0114',
+    office_location: 'Block C, Room 202',
+    consultation_hours: 'Wed 10:00 AM - 12:00 PM'
+  }
+];
+
+export const SEED_LOCATIONS = [
+  { id: 'loc-1', name: 'Central Digital Library', category: 'Library', building: 'Block A', floor: '2nd Floor', description: 'Quiet study zones, 50,000+ books, digital terminals & high-speed Wi-Fi.' },
+  { id: 'loc-2', name: 'Advanced AI & Data Science Lab', category: 'Lab', building: 'Block C', floor: '4th Floor (Room 402)', description: 'NVIDIA GPU workstations for Deep Learning & Computer Vision workloads.' },
+  { id: 'loc-3', name: 'DBMS & Software Engineering Lab', category: 'Lab', building: 'Block C', floor: '2nd Floor (Room 201)', description: 'Database servers, PostgreSQL setup, Agile project review pods.' },
+  { id: 'loc-4', name: 'Main Campus Auditorium', category: 'Auditorium', building: 'Block B', floor: 'Ground Floor', description: '1,200 capacity air-conditioned hall for placement drives & hackathons.' },
+  { id: 'loc-5', name: 'Student Food Court & Canteen', category: 'Canteen', building: 'Central Plaza', floor: 'Ground Floor', description: 'Multi-cuisine food vendors, seating for 500, cashless digital payment.' }
+];
+
+export const SEED_LOST_FOUND = [
+  { id: 'lf-1', item_name: 'Blue Dell Laptop Charger', category: 'Electronics', found_location: 'Lab 201, Block C', date_found: new Date(Date.now() - 86400000).toISOString().split('T')[0], status: 'Unclaimed', contact_person: 'Admin Security Desk' },
+  { id: 'lf-2', item_name: 'Casio Scientific Calculator FX-991EX', category: 'Stationery', found_location: 'Exam Hall 302', date_found: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0], status: 'Unclaimed', contact_person: 'Exam Controller Office' }
+];
+
+export const SEED_SHUTTLE_ROUTES = [
+  { id: 'shut-1', route_name: 'Metro Express Line 1', start_point: 'Main Gate', end_point: 'Central Metro Station', timings: ['07:30 AM', '08:15 AM', '09:00 AM', '05:15 PM', '06:00 PM'], stops: ['Main Gate', 'Library Square', 'Hostel Block', 'Metro Station'] },
+  { id: 'shut-2', route_name: 'Hostel Shuttle Line 2', start_point: 'Hostel Complex', end_point: 'Academic Block C', timings: ['08:30 AM', '08:50 AM', '01:15 PM', '05:00 PM'], stops: ['Boys Hostel', 'Girls Hostel', 'Food Court', 'Block C'] }
+];
+
+export const SEED_INSTITUTION_SETTINGS = {
+  min_attendance_pct: 75,
+  institution_name: 'Smart Campus AI Institute of Technology',
+  academic_year: '2025-2026'
+};
+

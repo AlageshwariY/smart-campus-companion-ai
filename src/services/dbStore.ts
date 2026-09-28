@@ -1,19 +1,4 @@
 import { 
-  Profile, 
-  Department, 
-  Subject, 
-  AttendanceRecord, 
-  TimetableSlot, 
-  Assignment, 
-  AssignmentSubmission, 
-  Exam, 
-  StudyMaterial, 
-  CampusEvent, 
-  Announcement, 
-  NotificationItem,
-  AIChatMessage 
-} from '../types';
-import { 
   SEED_DEPARTMENTS, 
   SEED_SUBJECTS, 
   SEED_STUDENTS, 
@@ -26,8 +11,36 @@ import {
   SEED_MATERIALS, 
   SEED_EVENTS, 
   SEED_ANNOUNCEMENTS, 
-  SEED_NOTIFICATIONS 
+  SEED_NOTIFICATIONS,
+  SEED_CAMPUS_DOCUMENTS,
+  SEED_FACULTY,
+  SEED_LOCATIONS,
+  SEED_LOST_FOUND,
+  SEED_SHUTTLE_ROUTES,
+  SEED_INSTITUTION_SETTINGS
 } from './seedData';
+import { 
+  Profile, 
+  Department, 
+  Subject, 
+  AttendanceRecord, 
+  TimetableSlot, 
+  Assignment, 
+  AssignmentSubmission, 
+  Exam, 
+  StudyMaterial, 
+  CampusEvent, 
+  Announcement, 
+  NotificationItem,
+  AIChatMessage,
+  CampusDocument,
+  FacultyMember,
+  CampusLocation,
+  LostAndFoundItem,
+  ShuttleRoute,
+  StudyPlan,
+  InstitutionSettings
+} from '../types';
 
 const STORAGE_KEYS = {
   PROFILES: 'scc_profiles_v1',
@@ -43,6 +56,13 @@ const STORAGE_KEYS = {
   ANNOUNCEMENTS: 'scc_announcements_v1',
   NOTIFICATIONS: 'scc_notifications_v1',
   AI_HISTORY: 'scc_ai_history_v1',
+  CAMPUS_DOCUMENTS: 'scc_campus_docs_v1',
+  FACULTY: 'scc_faculty_v1',
+  LOCATIONS: 'scc_locations_v1',
+  LOST_FOUND: 'scc_lost_found_v1',
+  SHUTTLE_ROUTES: 'scc_shuttle_v1',
+  STUDY_PLANS: 'scc_study_plans_v1',
+  SETTINGS: 'scc_settings_v1',
   CURRENT_USER: 'scc_current_user_v1'
 };
 
@@ -103,6 +123,24 @@ class LocalDatabaseStore {
     }
     if (!localStorage.getItem(STORAGE_KEYS.AI_HISTORY)) {
       localStorage.setItem(STORAGE_KEYS.AI_HISTORY, JSON.stringify([]));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CAMPUS_DOCUMENTS)) {
+      localStorage.setItem(STORAGE_KEYS.CAMPUS_DOCUMENTS, JSON.stringify(SEED_CAMPUS_DOCUMENTS));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.FACULTY)) {
+      localStorage.setItem(STORAGE_KEYS.FACULTY, JSON.stringify(SEED_FACULTY));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.LOCATIONS)) {
+      localStorage.setItem(STORAGE_KEYS.LOCATIONS, JSON.stringify(SEED_LOCATIONS));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.LOST_FOUND)) {
+      localStorage.setItem(STORAGE_KEYS.LOST_FOUND, JSON.stringify(SEED_LOST_FOUND));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.SHUTTLE_ROUTES)) {
+      localStorage.setItem(STORAGE_KEYS.SHUTTLE_ROUTES, JSON.stringify(SEED_SHUTTLE_ROUTES));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) {
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(SEED_INSTITUTION_SETTINGS));
     }
   }
 
@@ -512,6 +550,93 @@ class LocalDatabaseStore {
     history.push(newMsg);
     this.saveAndBroadcast(STORAGE_KEYS.AI_HISTORY, 'ai_chat_history', history, 'INSERT', newMsg);
     return newMsg;
+  }
+
+  // Campus RAG Documents
+  public getCampusDocuments(department?: string): CampusDocument[] {
+    let docs = this.getItem<CampusDocument>(STORAGE_KEYS.CAMPUS_DOCUMENTS);
+    if (department && department !== 'All') {
+      docs = docs.filter(d => d.department === department || d.department === 'All');
+    }
+    return docs;
+  }
+
+  public addCampusDocument(doc: Omit<CampusDocument, 'id' | 'created_at'>): CampusDocument {
+    const docs = this.getItem<CampusDocument>(STORAGE_KEYS.CAMPUS_DOCUMENTS);
+    const newDoc: CampusDocument = {
+      ...doc,
+      id: 'doc-' + Date.now(),
+      created_at: new Date().toISOString()
+    };
+    docs.push(newDoc);
+    this.saveAndBroadcast(STORAGE_KEYS.CAMPUS_DOCUMENTS, 'campus_documents', docs, 'INSERT', newDoc);
+    return newDoc;
+  }
+
+  public deleteCampusDocument(id: string) {
+    let docs = this.getItem<CampusDocument>(STORAGE_KEYS.CAMPUS_DOCUMENTS);
+    docs = docs.filter(d => d.id !== id);
+    this.saveAndBroadcast(STORAGE_KEYS.CAMPUS_DOCUMENTS, 'campus_documents', docs, 'DELETE', { id });
+  }
+
+  // Faculty Directory
+  public getFaculty(): FacultyMember[] {
+    return this.getItem<FacultyMember>(STORAGE_KEYS.FACULTY);
+  }
+
+  // Campus Locations
+  public getLocations(): CampusLocation[] {
+    return this.getItem<CampusLocation>(STORAGE_KEYS.LOCATIONS);
+  }
+
+  // Lost & Found
+  public getLostAndFound(): LostAndFoundItem[] {
+    return this.getItem<LostAndFoundItem>(STORAGE_KEYS.LOST_FOUND);
+  }
+
+  public addLostAndFound(item: Omit<LostAndFoundItem, 'id'>): LostAndFoundItem {
+    const items = this.getItem<LostAndFoundItem>(STORAGE_KEYS.LOST_FOUND);
+    const newItem: LostAndFoundItem = { ...item, id: 'lf-' + Date.now() };
+    items.unshift(newItem);
+    this.saveAndBroadcast(STORAGE_KEYS.LOST_FOUND, 'lost_found', items, 'INSERT', newItem);
+    return newItem;
+  }
+
+  // Shuttle Routes
+  public getShuttleRoutes(): ShuttleRoute[] {
+    return this.getItem<ShuttleRoute>(STORAGE_KEYS.SHUTTLE_ROUTES);
+  }
+
+  // Study Plans
+  public getStudyPlan(studentId: string): StudyPlan | null {
+    const plans = this.getItem<StudyPlan>(STORAGE_KEYS.STUDY_PLANS);
+    return plans.find(p => p.student_id === studentId) || null;
+  }
+
+  public saveStudyPlan(plan: StudyPlan): StudyPlan {
+    const plans = this.getItem<StudyPlan>(STORAGE_KEYS.STUDY_PLANS);
+    const idx = plans.findIndex(p => p.student_id === plan.student_id);
+    if (idx !== -1) {
+      plans[idx] = plan;
+    } else {
+      plans.push(plan);
+    }
+    this.saveAndBroadcast(STORAGE_KEYS.STUDY_PLANS, 'study_plans', plans, idx !== -1 ? 'UPDATE' : 'INSERT', plan);
+    return plan;
+  }
+
+  // Institution Settings
+  public getSettings(): InstitutionSettings {
+    const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    return raw ? JSON.parse(raw) : SEED_INSTITUTION_SETTINGS;
+  }
+
+  public updateSettings(settings: Partial<InstitutionSettings>): InstitutionSettings {
+    const current = this.getSettings();
+    const updated = { ...current, ...settings };
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
+    this.notifyListeners('institution_settings', updated);
+    return updated;
   }
 }
 

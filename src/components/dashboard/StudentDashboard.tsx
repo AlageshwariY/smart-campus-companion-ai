@@ -12,12 +12,16 @@ import {
   TrendingUp,
   MapPin,
   Bell,
-  UserCheck
+  BrainCircuit,
+  FileCheck,
+  Briefcase,
+  Building2,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRealtime } from '../../contexts/RealtimeContext';
 import { academicService } from '../../services/academicService';
-import { AttendanceRecord, TimetableSlot, Assignment, Exam, Announcement, CampusEvent, NotificationItem } from '../../types';
+import { AttendanceRecord, TimetableSlot, Assignment, Exam, Announcement, CampusEvent, NotificationItem, InstitutionSettings } from '../../types';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 
 interface StudentDashboardProps {
@@ -35,20 +39,22 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigateTa
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [events, setEvents] = useState<CampusEvent[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [settings, setSettings] = useState<InstitutionSettings>({ min_attendance_pct: 75, institution_name: '', academic_year: '' });
   const [loading, setLoading] = useState(true);
 
   const loadDashboardData = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [att, tt, asg, ex, ann, evt, notif] = await Promise.all([
+      const [att, tt, asg, ex, ann, evt, notif, stg] = await Promise.all([
         academicService.getStudentAttendance(user.id),
         academicService.getTimetable(user.department, user.year),
         academicService.getAssignments(user.department, user.year),
         academicService.getExams(user.department, user.year),
         academicService.getAnnouncements(user.department, user.year),
         academicService.getEvents(),
-        academicService.getNotifications(user.id)
+        academicService.getNotifications(user.id),
+        academicService.getSettings()
       ]);
 
       setAttendance(att);
@@ -58,6 +64,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigateTa
       setAnnouncements(ann);
       setEvents(evt);
       setNotifications(notif);
+      setSettings(stg);
     } finally {
       setLoading(false);
     }
@@ -103,8 +110,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigateTa
   const upcomingExams = exams.filter(e => new Date(e.exam_date).getTime() >= new Date().setHours(0,0,0,0));
   const nextExam = upcomingExams.length > 0 ? upcomingExams[0] : null;
 
-  // Unread notifications count
-  const unreadNotifCount = notifications.filter(n => !n.is_read).length;
+  // Dynamic AI Daily Insight Generation based on real database state
+  const lowestAttRecord = [...attendance].sort((a, b) => (a.present_days / (a.total_days || 1)) - (b.present_days / (b.total_days || 1)))[0];
+  const lowestPct = lowestAttRecord ? Math.round((lowestAttRecord.present_days / (lowestAttRecord.total_days || 1)) * 100) : 100;
+
+  let aiDailyInsight = `Here's what you need to know today: You have ${todaysClasses.length} lectures scheduled for today.`;
+  if (nextExam) {
+    const daysLeft = Math.ceil((new Date(nextExam.exam_date).getTime() - Date.now()) / 86400000);
+    aiDailyInsight = `Your ${nextExam.title} is in ${daysLeft} days. Based on your current revision progress, I recommend 45 minutes of ${nextExam.subject_name} revision today.`;
+  } else if (lowestAttRecord && lowestPct < settings.min_attendance_pct) {
+    aiDailyInsight = `Your attendance in ${lowestAttRecord.subject_name} is currently ${lowestPct}%, which is below your institution's ${settings.min_attendance_pct}% threshold. Be sure to attend the upcoming lectures!`;
+  }
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -140,6 +156,76 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigateTa
         </div>
       </div>
 
+      {/* AI Daily Insight Banner */}
+      <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900 border border-indigo-500/30 flex items-start gap-4">
+        <div className="p-2.5 rounded-xl bg-indigo-600/30 border border-indigo-500/40 text-amber-300 shrink-0 mt-0.5">
+          <Sparkles className="w-5 h-5 animate-pulse" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-2">
+            AI Daily Insight & Recommendation
+          </h3>
+          <p className="text-xs text-slate-200 mt-1 leading-relaxed font-medium">
+            "{aiDailyInsight}"
+          </p>
+        </div>
+      </div>
+
+      {/* Quick Action Shortcuts Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button
+          onClick={() => onNavigateTab('planner')}
+          className="p-3.5 rounded-2xl glass-card border border-slate-800 hover:border-indigo-500/40 text-left flex items-center gap-3 group transition-all"
+        >
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+            <BrainCircuit className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-slate-200">Study Planner</h4>
+            <p className="text-[10px] text-slate-400">AI Weekly Plan</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => onNavigateTab('notes')}
+          className="p-3.5 rounded-2xl glass-card border border-slate-800 hover:border-purple-500/40 text-left flex items-center gap-3 group transition-all"
+        >
+          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+            <FileCheck className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-slate-200">Notes Analyzer</h4>
+            <p className="text-[10px] text-slate-400">PDF & Flashcards</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => onNavigateTab('career')}
+          className="p-3.5 rounded-2xl glass-card border border-slate-800 hover:border-emerald-500/40 text-left flex items-center gap-3 group transition-all"
+        >
+          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <Briefcase className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-slate-200">Career & Placement</h4>
+            <p className="text-[10px] text-slate-400">ATS & Interview AI</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => onNavigateTab('services')}
+          className="p-3.5 rounded-2xl glass-card border border-slate-800 hover:border-amber-500/40 text-left flex items-center gap-3 group transition-all"
+        >
+          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+            <Building2 className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-slate-200">Campus Services</h4>
+            <p className="text-[10px] text-slate-400">Map & Directory</p>
+          </div>
+        </button>
+      </div>
+
       {/* Main KPI Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Attendance Card */}
@@ -149,11 +235,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigateTa
         >
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-400">Overall Attendance</span>
-            <div className={`p-2 rounded-xl ${overallAttendancePct >= 75 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+            <div className={`p-2 rounded-xl ${overallAttendancePct >= settings.min_attendance_pct ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
-          <h3 className={`text-3xl font-extrabold mt-2 ${overallAttendancePct >= 75 ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <h3 className={`text-3xl font-extrabold mt-2 ${overallAttendancePct >= settings.min_attendance_pct ? 'text-emerald-400' : 'text-rose-400'}`}>
             {overallAttendancePct}%
           </h3>
           <div className="flex items-center justify-between text-[11px] text-slate-400 mt-3 pt-2 border-t border-slate-800">

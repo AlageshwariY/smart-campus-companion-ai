@@ -183,5 +183,154 @@ export interface AIChatMessage {
   conversation_id: string;
   role: 'user' | 'assistant';
   message: string;
+  sources?: string[];
   created_at: string;
 }
+
+// Campus RAG Document
+export type CampusDocCategory = 'Regulation' | 'Syllabus' | 'Academic Calendar' | 'Notice' | 'Department' | 'Exam Policy' | 'Placement' | 'Handbook' | 'FAQ';
+
+export interface CampusDocument {
+  id: string;
+  title: string;
+  category: CampusDocCategory;
+  department: string;
+  content: string;
+  file_url?: string;
+  uploaded_by?: string;
+  created_at?: string;
+}
+
+// AI Study Planner
+export interface StudyPlanSession {
+  id: string;
+  subject_name: string;
+  topic: string;
+  duration_minutes: number;
+  day_of_week: string;
+  time_slot: string;
+  priority: 'High' | 'Medium' | 'Low';
+  is_completed: boolean;
+  type: 'Lecture Review' | 'Practice Quiz' | 'Exam Prep' | 'Revision';
+}
+
+export interface StudyPlan {
+  id: string;
+  student_id: string;
+  title: string;
+  generated_at: string;
+  available_hours_per_day: number;
+  preferred_time: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
+  sessions: StudyPlanSession[];
+  weekly_goals: string[];
+}
+
+// Document / Notes Analyzer Quiz item
+export interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  subject?: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+export interface NotesAnalysisResult {
+  summary: string;
+  key_topics: string[];
+  explanation: string;
+  flashcards: Flashcard[];
+  quiz: QuizQuestion[];
+}
+
+// Career & Placement AI
+export interface CareerRoadmapNode {
+  step: number;
+  title: string;
+  description: string;
+  skills: string[];
+  recommended_resources: string[];
+  project_idea: string;
+  estimated_duration: string;
+}
+
+export interface ResumeAnalysisResult {
+  overall_score: number; // 0-100
+  key_strengths: string[];
+  missing_skills: string[];
+  weak_sections: string[];
+  formatting_feedback: string[];
+  tailored_suggestions: string[];
+}
+
+export interface InterviewQnA {
+  id: string;
+  question: string;
+  sample_answer: string;
+  student_answer?: string;
+  feedback?: string;
+  score?: number; // 1-10
+}
+
+export interface InterviewSession {
+  id: string;
+  role_target: string;
+  type: 'HR' | 'Technical' | 'Behavioral';
+  date: string;
+  questions: InterviewQnA[];
+  overall_feedback?: string;
+}
+
+// Campus Services
+export interface FacultyMember {
+  id: string;
+  name: string;
+  department: string;
+  designation: string;
+  email: string;
+  phone?: string;
+  office_location: string;
+  consultation_hours: string;
+}
+
+export interface CampusLocation {
+  id: string;
+  name: string;
+  category: 'Academic Block' | 'Lab' | 'Library' | 'Canteen' | 'Auditorium' | 'Sports' | 'Hostel';
+  building: string;
+  floor: string;
+  description: string;
+}
+
+export interface LostAndFoundItem {
+  id: string;
+  item_name: string;
+  category: string;
+  found_location: string;
+  date_found: string;
+  status: 'Unclaimed' | 'Claimed';
+  contact_person: string;
+}
+
+export interface ShuttleRoute {
+  id: string;
+  route_name: string;
+  start_point: string;
+  end_point: string;
+  timings: string[];
+  stops: string[];
+}
+
+// Institution Settings
+export interface InstitutionSettings {
+  min_attendance_pct: number;
+  institution_name: string;
+  academic_year: string;
+}
+

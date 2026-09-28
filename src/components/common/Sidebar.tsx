@@ -11,8 +11,12 @@ import {
   CalendarDays, 
   BarChart3, 
   ShieldCheck, 
-  UserCheck, 
-  LogOut 
+  LogOut,
+  BrainCircuit,
+  FileCheck,
+  Briefcase,
+  Building2,
+  Library
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -34,20 +38,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
   const studentNav: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'attendance', label: 'Attendance', icon: CheckCircle2 },
+    { id: 'academic', label: 'Academic & Courses', icon: BookOpen },
+    { id: 'planner', label: 'AI Study Planner', icon: BrainCircuit, badge: 'AI' },
+    { id: 'notes', label: 'AI Notes Analyzer', icon: FileCheck, badge: 'AI' },
+    { id: 'career', label: 'Career & Placement', icon: Briefcase, badge: 'AI' },
+    { id: 'ai', label: 'Campus AI Assistant', icon: Sparkles, badge: 'AI' },
+    { id: 'knowledge', label: 'Campus Knowledge (RAG)', icon: Library },
+    { id: 'services', label: 'Campus Services', icon: Building2 },
     { id: 'timetable', label: 'Timetable', icon: Calendar },
     { id: 'assignments', label: 'Assignments', icon: FileText },
     { id: 'exams', label: 'Exam Center', icon: GraduationCap },
     { id: 'materials', label: 'Study Hub', icon: BookOpen },
     { id: 'events', label: 'Campus Events', icon: CalendarDays },
     { id: 'announcements', label: 'Announcements', icon: Megaphone },
-    { id: 'insights', label: 'My Insights', icon: BarChart3 },
-    { id: 'ai', label: 'AI Assistant', icon: Sparkles, badge: 'AI' }
+    { id: 'insights', label: 'My Analytics', icon: BarChart3 }
   ];
 
   const adminNav: NavItem[] = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
     { id: 'admin', label: 'Admin Management', icon: ShieldCheck, highlight: true },
+    { id: 'knowledge', label: 'Manage RAG Documents', icon: Library },
+    { id: 'academic', label: 'Academic Settings', icon: BookOpen },
     { id: 'attendance', label: 'Attendance Entry', icon: CheckCircle2 },
     { id: 'timetable', label: 'Timetable Schedule', icon: Calendar },
     { id: 'assignments', label: 'Assignments Manager', icon: FileText },
@@ -55,6 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'materials', label: 'Study Materials', icon: BookOpen },
     { id: 'events', label: 'Manage Events', icon: CalendarDays },
     { id: 'announcements', label: 'Announcements', icon: Megaphone },
+    { id: 'services', label: 'Campus Services', icon: Building2 },
     { id: 'ai', label: 'AI Campus Guide', icon: Sparkles }
   ];
 
@@ -70,11 +82,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           </div>
           <div>
             <h1 className="font-bold text-slate-100 text-sm leading-tight tracking-wide">SMART CAMPUS</h1>
-            <p className="text-[11px] text-indigo-400 font-medium tracking-wider uppercase">COMPANION</p>
+            <p className="text-[11px] text-indigo-400 font-medium tracking-wider uppercase">COMPANION AI</p>
           </div>
         </div>
 
-        {/* Role Quick Switcher Pill (for Instant Demo Testing) */}
+        {/* Role Quick Switcher Pill */}
         <div className="px-4 py-3 mx-4 my-3 bg-slate-950/60 rounded-xl border border-slate-800 text-xs flex flex-col gap-2">
           <div className="flex items-center justify-between text-slate-400">
             <span>ACTIVE ROLE:</span>
@@ -99,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         </div>
 
         {/* Navigation Links */}
-        <nav className="px-3 py-2 space-y-1 overflow-y-auto max-h-[calc(100vh-230px)]">
+        <nav className="px-3 py-2 space-y-1 overflow-y-auto max-h-[calc(100vh-230px)] scrollbar-none">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -120,7 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
                   <span>{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-indigo-400/20 text-indigo-300 rounded border border-indigo-400/30 animate-pulse">
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-indigo-400/20 text-indigo-300 rounded border border-indigo-400/30">
                     {item.badge}
                   </span>
                 )}

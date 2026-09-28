@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, Sparkles, Database, Check, RefreshCw } from 'lucide-react';
+import { Bell, Search, Sparkles, Database, Check, RefreshCw, Command } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRealtime } from '../../contexts/RealtimeContext';
 import { academicService } from '../../services/academicService';
@@ -8,14 +8,14 @@ import { NotificationItem } from '../../types';
 interface NavbarProps {
   onOpenAI: () => void;
   onNavigateTab: (tab: string) => void;
+  onOpenCommandPalette: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenAI, onNavigateTab }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenAI, onNavigateTab, onOpenCommandPalette }) => {
   const { user, role, isConfigured } = useAuth();
   const { subscribeToTable } = useRealtime();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const loadNotifications = async () => {
     if (!user) return;
@@ -40,18 +40,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAI, onNavigateTab }) => {
 
   return (
     <header className="h-16 bg-slate-900/80 border-b border-slate-800 sticky top-0 z-20 backdrop-blur-md px-4 md:px-8 flex items-center justify-between">
-      {/* Search & Campus Title */}
+      {/* Search Bar / Command Palette Trigger */}
       <div className="flex items-center gap-4 flex-1 max-w-md">
-        <div className="relative w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search assignments, exams, subjects, materials..."
-            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
-          />
-        </div>
+        <button
+          onClick={onOpenCommandPalette}
+          className="relative w-full bg-slate-950/60 border border-slate-800 hover:border-indigo-500/50 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-400 text-left transition-all flex items-center justify-between group"
+        >
+          <Search className="w-4 h-4 text-slate-400 group-hover:text-indigo-400 absolute left-3 top-1/2 -translate-y-1/2 transition-colors" />
+          <span className="truncate">Search commands, subjects, AI tools...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded font-mono text-slate-400">
+            <Command className="w-3 h-3" /> K
+          </kbd>
+        </button>
       </div>
 
       {/* Right Controls */}
@@ -120,7 +120,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAI, onNavigateTab }) => {
                         if (n.type === 'assignment') onNavigateTab('assignments');
                         else if (n.type === 'exam') onNavigateTab('exams');
                         else if (n.type === 'announcement') onNavigateTab('announcements');
-                        else if (n.type === 'attendance') onNavigateTab('attendance');
+                        else if (n.type === 'attendance') onNavigateTab('academic');
                         setShowNotifications(false);
                       }}
                       className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${

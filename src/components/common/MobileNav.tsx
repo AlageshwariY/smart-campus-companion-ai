@@ -1,11 +1,11 @@
 import React from 'react';
 import { 
   LayoutDashboard, 
-  CheckCircle2, 
-  Calendar, 
-  FileText, 
   BookOpen, 
   Sparkles, 
+  BrainCircuit,
+  Briefcase,
+  Building2,
   ShieldCheck 
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,10 +20,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab })
 
   const items = [
     { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
-    { id: 'attendance', label: 'Attendance', icon: CheckCircle2 },
-    { id: 'ai', label: 'AI Helper', icon: Sparkles, highlight: true },
-    { id: 'timetable', label: 'Timetable', icon: Calendar },
-    { id: role === 'admin' ? 'admin' : 'assignments', label: role === 'admin' ? 'Admin' : 'Tasks', icon: role === 'admin' ? ShieldCheck : FileText },
+    { id: 'academic', label: 'Academic', icon: BookOpen },
+    { id: 'ai', label: 'AI Chat', icon: Sparkles, highlight: true },
+    { id: 'planner', label: 'Planner', icon: BrainCircuit },
+    { id: role === 'admin' ? 'admin' : 'career', label: role === 'admin' ? 'Admin' : 'Career', icon: role === 'admin' ? ShieldCheck : Briefcase },
   ];
 
   return (

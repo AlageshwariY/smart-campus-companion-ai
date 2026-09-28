@@ -320,5 +320,71 @@ export const academicService = {
       if (data) return data as Department[];
     }
     return dbStore.getDepartments();
+  },
+
+  // Campus RAG Documents
+  async getCampusDocuments(department?: string) {
+    if (isSupabaseConfigured && supabase) {
+      let query = supabase.from('campus_documents').select('*');
+      if (department && department !== 'All') query = query.or(`department.eq.${department},department.eq.All`);
+      const { data } = await query;
+      if (data) return data;
+    }
+    return dbStore.getCampusDocuments(department);
+  },
+
+  async createCampusDocument(doc: any) {
+    if (isSupabaseConfigured && supabase) {
+      const { data } = await supabase.from('campus_documents').insert(doc).select().single();
+      if (data) return data;
+    }
+    return dbStore.addCampusDocument(doc);
+  },
+
+  async deleteCampusDocument(id: string) {
+    if (isSupabaseConfigured && supabase) {
+      await supabase.from('campus_documents').delete().eq('id', id);
+      return;
+    }
+    dbStore.deleteCampusDocument(id);
+  },
+
+  // Campus Services
+  async getFaculty() {
+    return dbStore.getFaculty();
+  },
+
+  async getLocations() {
+    return dbStore.getLocations();
+  },
+
+  async getLostAndFound() {
+    return dbStore.getLostAndFound();
+  },
+
+  async createLostAndFound(item: any) {
+    return dbStore.addLostAndFound(item);
+  },
+
+  async getShuttleRoutes() {
+    return dbStore.getShuttleRoutes();
+  },
+
+  // AI Study Plans
+  async getStudyPlan(studentId: string) {
+    return dbStore.getStudyPlan(studentId);
+  },
+
+  async saveStudyPlan(plan: any) {
+    return dbStore.saveStudyPlan(plan);
+  },
+
+  // Institution Settings
+  async getSettings() {
+    return dbStore.getSettings();
+  },
+
+  async updateSettings(settings: any) {
+    return dbStore.updateSettings(settings);
   }
 };

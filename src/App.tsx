@@ -7,11 +7,18 @@ import { Sidebar } from './components/common/Sidebar';
 import { Navbar } from './components/common/Navbar';
 import { MobileNav } from './components/common/MobileNav';
 import { AuthModal } from './components/auth/AuthModal';
+import { CommandPalette } from './components/common/CommandPalette';
 
 // Student & Shared Modules
 import { StudentDashboard } from './components/dashboard/StudentDashboard';
 import { AdminDashboard } from './components/dashboard/AdminDashboard';
 import { AttendanceView } from './components/attendance/AttendanceView';
+import { AcademicManagementView } from './components/academic/AcademicManagementView';
+import { AIStudyPlannerView } from './components/planner/AIStudyPlannerView';
+import { NotesAnalyzerView } from './components/notes/NotesAnalyzerView';
+import { CareerPlacementView } from './components/career/CareerPlacementView';
+import { CampusKnowledgeCenter } from './components/ai/CampusKnowledgeCenter';
+import { CampusServicesView } from './components/services/CampusServicesView';
 import { TimetableSchedule } from './components/timetable/TimetableSchedule';
 import { AssignmentList } from './components/assignments/AssignmentList';
 import { ExamCenter } from './components/exams/ExamCenter';
@@ -25,6 +32,7 @@ import { AdminManagementCenter } from './components/admin/AdminManagementCenter'
 const MainLayout: React.FC = () => {
   const { user, role, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [isCmdOpen, setIsCmdOpen] = useState<boolean>(false);
 
   if (loading) {
     return (
@@ -32,7 +40,7 @@ const MainLayout: React.FC = () => {
         <div className="w-12 h-12 rounded-2xl bg-indigo-600 animate-pulse flex items-center justify-center text-white font-bold text-xl mb-4">
           SC
         </div>
-        <p className="text-xs text-slate-400 font-medium">Initializing Smart Campus Companion...</p>
+        <p className="text-xs text-slate-400 font-medium">Initializing Smart Campus Companion AI...</p>
       </div>
     );
   }
@@ -46,6 +54,13 @@ const MainLayout: React.FC = () => {
       {/* Network Offline Indicator Banner */}
       <OfflineBanner />
 
+      {/* Global Command Palette (Ctrl+K) */}
+      <CommandPalette 
+        isOpen={isCmdOpen} 
+        onClose={() => setIsCmdOpen(false)} 
+        onNavigateTab={setActiveTab} 
+      />
+
       <div className="flex flex-1">
         {/* Responsive Sidebar */}
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -56,6 +71,7 @@ const MainLayout: React.FC = () => {
           <Navbar 
             onOpenAI={() => setActiveTab('ai')} 
             onNavigateTab={setActiveTab} 
+            onOpenCommandPalette={() => setIsCmdOpen(true)}
           />
 
           {/* Main Content Body */}
@@ -67,7 +83,13 @@ const MainLayout: React.FC = () => {
                   : <StudentDashboard onNavigateTab={setActiveTab} />
               )}
 
+              {activeTab === 'academic' && <AcademicManagementView />}
               {activeTab === 'attendance' && <AttendanceView />}
+              {activeTab === 'planner' && <AIStudyPlannerView />}
+              {activeTab === 'notes' && <NotesAnalyzerView />}
+              {activeTab === 'career' && <CareerPlacementView />}
+              {activeTab === 'knowledge' && <CampusKnowledgeCenter />}
+              {activeTab === 'services' && <CampusServicesView />}
               {activeTab === 'timetable' && <TimetableSchedule />}
               {activeTab === 'assignments' && <AssignmentList />}
               {activeTab === 'exams' && <ExamCenter />}
@@ -99,4 +121,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-
