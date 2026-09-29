@@ -189,20 +189,43 @@ class LocalDatabaseStore {
     return profiles[idx];
   }
 
+  public addProfile(profile: Profile): Profile {
+    const profiles = this.getProfiles();
+    profiles.push(profile);
+    this.saveAndBroadcast(STORAGE_KEYS.PROFILES, 'profiles', profiles, 'INSERT', profile);
+    return profile;
+  }
+
   // Attendance
   public getAttendance(studentId: string): AttendanceRecord[] {
     const records = this.getItem<AttendanceRecord>(STORAGE_KEYS.ATTENDANCE);
     const subjects = this.getSubjects();
-    return records
-      .filter(r => r.student_id === studentId)
-      .map(r => {
-        const subj = subjects.find(s => s.id === r.subject_id);
-        return {
-          ...r,
-          subject_name: subj?.name || 'Unknown Subject',
-          subject_code: subj?.code || 'N/A'
-        };
-      });
+    let studentRecords = records.filter(r => r.student_id === studentId);
+
+    // Auto-generate default subject attendance for newly registered/logged-in students if empty
+    if (studentRecords.length === 0 && studentId) {
+      studentRecords = subjects.map((subj, idx) => ({
+        id: 'att-' + Date.now() + '-' + idx,
+        student_id: studentId,
+        subject_id: subj.id,
+        subject_name: subj.name,
+        subject_code: subj.code,
+        present_days: 25 + (idx % 4),
+        total_days: 30,
+        last_updated: new Date().toISOString()
+      }));
+      records.push(...studentRecords);
+      localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(records));
+    }
+
+    return studentRecords.map(r => {
+      const subj = subjects.find(s => s.id === r.subject_id);
+      return {
+        ...r,
+        subject_name: r.subject_name || subj?.name || 'Subject',
+        subject_code: r.subject_code || subj?.code || 'N/A'
+      };
+    });
   }
 
   public updateAttendance(studentId: string, subjectId: string, presentDays: number, totalDays: number): AttendanceRecord {

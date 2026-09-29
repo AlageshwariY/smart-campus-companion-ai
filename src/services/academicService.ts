@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { dbStore } from './dbStore';
+import { api } from './api';
 import { 
   Profile, 
   Subject, 
@@ -18,6 +19,12 @@ import {
 export const academicService = {
   // Profiles
   async getProfile(userId: string): Promise<Profile | null> {
+    try {
+      const res = await api.getProfile(userId);
+      if (res) return res;
+    } catch {
+      // Fallback
+    }
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('profiles')
@@ -30,6 +37,12 @@ export const academicService = {
   },
 
   async getAllProfiles(): Promise<Profile[]> {
+    try {
+      const res = await api.getAllProfiles();
+      if (res && res.length > 0) return res;
+    } catch {
+      // Fallback
+    }
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase.from('profiles').select('*');
       if (data) return data as Profile[];
@@ -38,6 +51,15 @@ export const academicService = {
   },
 
   async updateProfile(userId: string, updates: Partial<Profile>): Promise<Profile | null> {
+    try {
+      const res = await api.updateProfile(userId, updates);
+      if (res) {
+        dbStore.updateProfile(userId, updates);
+        return res;
+      }
+    } catch {
+      // Fallback
+    }
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('profiles')
@@ -52,13 +74,19 @@ export const academicService = {
 
   // Attendance
   async getStudentAttendance(studentId: string): Promise<AttendanceRecord[]> {
+    try {
+      const res = await api.getStudentAttendance(studentId);
+      if (res && res.length > 0) return res;
+    } catch {
+      // Fallback
+    }
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase
         .from('attendance')
         .select('*, subjects(name, code)')
         .eq('student_id', studentId);
 
-      if (data) {
+      if (data && data.length > 0) {
         return data.map(row => ({
           id: row.id,
           student_id: row.student_id,
@@ -75,7 +103,13 @@ export const academicService = {
   },
 
   async updateAttendance(studentId: string, subjectId: string, presentDays: number, totalDays: number): Promise<AttendanceRecord> {
-    if (isSupabaseConfigured && supabase) {
+    let resultRecord: AttendanceRecord | null = null;
+    try {
+      resultRecord = await api.updateAttendance(studentId, subjectId, presentDays, totalDays);
+    } catch {
+      // Fallback
+    }
+    if (!resultRecord && isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('attendance')
         .upsert({
@@ -87,9 +121,10 @@ export const academicService = {
         })
         .select()
         .single();
-      if (!error && data) return data as AttendanceRecord;
+      if (!error && data) resultRecord = data as AttendanceRecord;
     }
-    return dbStore.updateAttendance(studentId, subjectId, presentDays, totalDays);
+    const localUpdated = dbStore.updateAttendance(studentId, subjectId, presentDays, totalDays);
+    return resultRecord || localUpdated;
   },
 
   // Timetable

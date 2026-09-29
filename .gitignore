@@ -25,3 +25,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
+server/db_storage.json
+
+src/services/academicService.backup.ts

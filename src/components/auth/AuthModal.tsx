@@ -1,131 +1,310 @@
 import React, { useState } from 'react';
-import { LogIn, UserCheck, ShieldCheck, Mail, Lock, Sparkles, Database } from 'lucide-react';
+import { LogIn, UserPlus, UserCheck, ShieldCheck, Mail, Lock, User, Hash, Building, Calendar, Phone, BookOpen, Database, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 
+type AuthMode = 'student-login' | 'student-register' | 'admin-login' | 'admin-register';
+
 export const AuthModal: React.FC = () => {
-  const { login, loginAsDemoStudent, loginAsDemoAdmin, isConfigured } = useAuth();
+  const { login, register, loginAsDemoStudent, loginAsDemoAdmin } = useAuth();
+  const [mode, setMode] = useState<AuthMode>('student-login');
+
+  // Form Fields
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('student');
+  const [password, setPassword] = useState('');
+  const [registerNumber, setRegisterNumber] = useState('');
+  const [department, setDepartment] = useState('Computer Science & Engineering');
+  const [year, setYear] = useState('4th Year');
+  const [section, setSection] = useState('A');
+  const [phone, setPhone] = useState('');
+  const [dob, setDob] = useState('');
+  const [collegeName, setCollegeName] = useState('Smart Campus University');
+
   const [loading, setLoading] = useState(false);
-  const [sentOtp, setSentOtp] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const isLogin = mode === 'student-login' || mode === 'admin-login';
+  const isAdmin = mode === 'admin-login' || mode === 'admin-register';
+  const role: UserRole = isAdmin ? 'admin' : 'student';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    setErrorMsg(null);
     setLoading(true);
+
     try {
-      await login(email, selectedRole);
-      if (isConfigured) {
-        setSentOtp(true);
+      if (isLogin) {
+        if (!email || !password) {
+          throw new Error('Please fill in both email and password.');
+        }
+        await login(email, password, role);
+      } else {
+        // Register Mode Validations
+        if (!fullName || !email || !password) {
+          throw new Error('Full Name, Email, and Password are required.');
+        }
+        if (role === 'student' && !registerNumber) {
+          throw new Error('Register Number is required for Student Registration.');
+        }
+
+        await register({
+          full_name: fullName,
+          email,
+          password,
+          role,
+          register_number: registerNumber,
+          department,
+          year,
+          section,
+          phone,
+          dob,
+          college_name: collegeName
+        });
       }
     } catch (err: any) {
-      alert(err.message || 'Login failed');
+      setErrorMsg(err.message || 'Authentication operation failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Dynamic Ambient Background Glows */}
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden my-auto">
+      {/* Background Ambient Blur */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pulse-glow pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pulse-glow pointer-events-none" />
 
-      <div className="glass-panel w-full max-w-md p-8 rounded-3xl border border-slate-800 shadow-2xl relative z-10 space-y-6">
-        {/* Brand */}
+      <div className="glass-panel w-full max-w-xl p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl relative z-10 space-y-6">
+        {/* Header Branding */}
         <div className="text-center space-y-2">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30 font-black text-2xl">
             SC
           </div>
           <h1 className="text-2xl font-black text-slate-100 tracking-tight">SMART CAMPUS COMPANION</h1>
-          <p className="text-xs text-slate-400">AI-Powered Real-Time Student Assistance Platform</p>
+          <p className="text-xs text-slate-400">AI-Based Student Assistance and Academic Management System</p>
         </div>
 
-        {/* Database Mode Badge */}
-        <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-          <Database className={`w-4 h-4 ${isConfigured ? 'text-emerald-400' : 'text-indigo-400'}`} />
-          <span>{isConfigured ? 'Connected to Supabase PostgreSQL' : 'Local Database Fallback Engine Active'}</span>
-        </div>
-
-        {/* Fast Demo One-Click Login Buttons */}
-        <div className="space-y-2 pt-2">
-          <p className="text-[11px] font-bold text-slate-400 uppercase text-center tracking-wider">Instant One-Click Test Login</p>
+        {/* Quick Demo Test Buttons */}
+        <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+          <p className="text-[10px] font-bold text-slate-400 uppercase text-center tracking-wider">Instant Demo Mode Test Login</p>
           <div className="grid grid-cols-2 gap-3">
             <button
+              type="button"
               onClick={loginAsDemoStudent}
-              className="py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+              className="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all"
             >
               <UserCheck className="w-4 h-4" /> Demo Student
             </button>
-
             <button
+              type="button"
               onClick={loginAsDemoAdmin}
-              className="py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-lg shadow-amber-600/25 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+              className="py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all"
             >
               <ShieldCheck className="w-4 h-4" /> Demo Admin
             </button>
           </div>
         </div>
 
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-slate-800"></div>
-          <span className="flex-shrink mx-4 text-[10px] text-slate-500 font-bold uppercase">Or Sign In with Email</span>
-          <div className="flex-grow border-t border-slate-800"></div>
+        {/* Mode Selector Navigation Tabs */}
+        <div className="grid grid-cols-2 p-1 bg-slate-900 rounded-2xl border border-slate-800 gap-1 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setMode('student-login')}
+            className={`py-2 rounded-xl transition-all ${mode === 'student-login' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Student Login
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('student-register')}
+            className={`py-2 rounded-xl transition-all ${mode === 'student-register' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Student Register
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('admin-login')}
+            className={`py-2 rounded-xl transition-all ${mode === 'admin-login' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Admin Login
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('admin-register')}
+            className={`py-2 rounded-xl transition-all ${mode === 'admin-register' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Admin Register
+          </button>
         </div>
 
-        {/* Email Form */}
+        {/* Error Alert Display */}
+        {errorMsg && (
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Dynamic Auth Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Campus Email Address</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@campus.edu"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                required
-              />
+          {!isLogin && (
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Full Name *</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. Alageshwari Y"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                  required={!isLogin}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Email Address *</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="student@campus.edu"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Password *</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Select Role</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedRole('student')}
-                className={`py-2 text-xs font-semibold rounded-xl border transition-all ${selectedRole === 'student' ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500' : 'bg-slate-950 text-slate-400 border-slate-800'}`}
-              >
-                Student
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedRole('admin')}
-                className={`py-2 text-xs font-semibold rounded-xl border transition-all ${selectedRole === 'admin' ? 'bg-amber-600/20 text-amber-300 border-amber-500' : 'bg-slate-950 text-slate-400 border-slate-800'}`}
-              >
-                Admin
-              </button>
+          {!isLogin && role === 'student' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Register Number *</label>
+                <div className="relative">
+                  <Hash className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={registerNumber}
+                    onChange={(e) => setRegisterNumber(e.target.value)}
+                    placeholder="e.g. 21CS042"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 uppercase font-mono"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Department</label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                  <option value="Electronics & Communication">Electronics & Communication</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Mechanical Engineering">Mechanical Engineering</option>
+                  <option value="Civil Engineering">Civil Engineering</option>
+                </select>
+              </div>
             </div>
-          </div>
+          )}
+
+          {!isLogin && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Year</label>
+                <select
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="1st Year">1st Year</option>
+                  <option value="2nd Year">2nd Year</option>
+                  <option value="3rd Year">3rd Year</option>
+                  <option value="4th Year">4th Year</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Section</label>
+                <input
+                  type="text"
+                  value={section}
+                  onChange={(e) => setSection(e.target.value)}
+                  placeholder="A"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 uppercase"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+91 9876543210"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+          )}
+
+          {!isLogin && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Date of Birth</label>
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">College / Institution</label>
+                <input
+                  type="text"
+                  value={collegeName}
+                  onChange={(e) => setCollegeName(e.target.value)}
+                  placeholder="Smart Campus College"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+            className={`w-full py-3 rounded-xl font-bold text-xs shadow-lg transition-all flex items-center justify-center gap-2 ${isAdmin ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'}`}
           >
-            <LogIn className="w-4 h-4" />
-            {loading ? 'Authenticating...' : 'Sign In to Campus Portal'}
+            {isLogin ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+            {loading ? 'Processing Authentication...' : isLogin ? `Sign In as ${isAdmin ? 'Admin' : 'Student'}` : `Register ${isAdmin ? 'Admin' : 'Student'} Account`}
           </button>
         </form>
-
-        {sentOtp && (
-          <p className="text-xs text-emerald-400 text-center font-medium">
-            Magic login link sent to your email address!
-          </p>
-        )}
       </div>
     </div>
   );

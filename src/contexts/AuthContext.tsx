@@ -3,13 +3,15 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Profile, UserRole } from '../types';
 import { academicService } from '../services/academicService';
 import { dbStore } from '../services/dbStore';
+import { api } from '../services/api';
 import { SEED_STUDENTS, SEED_ADMIN } from '../services/seedData';
 
 interface AuthContextType {
   user: Profile | null;
   role: UserRole | null;
   loading: boolean;
-  login: (email: string, role?: UserRole) => Promise<void>;
+  login: (email: string, password?: string, selectedRole?: UserRole) => Promise<void>;
+  register: (profileData: Partial<Profile> & { password?: string }) => Promise<void>;
   loginAsDemoStudent: () => void;
   loginAsDemoAdmin: () => void;
   logout: () => Promise<void>;
@@ -29,16 +31,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async function initAuth() {
       if (isSupabaseConfigured && supabase) {
         try {
-          // First set up the auth state listener BEFORE checking the session
-          // This avoids a race condition where the session check fires before
-          // the listener is registered
           const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (session?.user) {
               const profile = await academicService.getProfile(session.user.id);
               if (profile) {
                 setUser(profile);
               } else {
-                // Fallback profile construction if Supabase profile row missing
                 setUser({
                   id: session.user.id,
                   email: session.user.email || '',
@@ -50,53 +48,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
               }
             } else {
-              // No session — check localStorage fallback for demo mode
-              const savedUserRaw = localStorage.getItem('scc_current_user_v1');
-              if (savedUserRaw) {
-                try { setUser(JSON.parse(savedUserRaw)); } catch { setUser(null); }
-              } else {
-                setUser(null);
-              }
+              initLocalSession();
             }
             setLoading(false);
           });
 
           authListenerCleanup = () => authListener.subscription.unsubscribe();
-
-          // Now check current session — this will trigger onAuthStateChange if a session exists
           await supabase.auth.getSession();
-
-          // Safety timeout: if onAuthStateChange hasn't fired after 3s, unblock loading
-          const safetyTimer = setTimeout(() => setLoading(false), 3000);
-          authListenerCleanup = () => {
-            clearTimeout(safetyTimer);
-            authListener.subscription.unsubscribe();
-          };
-        } catch (err) {
-          console.error('[Auth] Supabase init error, falling back to local mode:', err);
-          // Fall through to local mode on any Supabase error
-          initLocalMode();
+        } catch {
+          initLocalSession();
         }
       } else {
-        initLocalMode();
+        initLocalSession();
       }
     }
 
-    function initLocalMode() {
-      // Standalone / LocalStorage session initialization
+    function initLocalSession() {
       const savedUserRaw = localStorage.getItem('scc_current_user_v1');
       if (savedUserRaw) {
         try {
           setUser(JSON.parse(savedUserRaw));
         } catch {
-          // Corrupted data — reset to demo student
-          setUser(SEED_STUDENTS[0]);
-          localStorage.setItem('scc_current_user_v1', JSON.stringify(SEED_STUDENTS[0]));
+          setUser(null);
         }
       } else {
-        // Default to student demo user for instant interactive preview
-        setUser(SEED_STUDENTS[0]);
-        localStorage.setItem('scc_current_user_v1', JSON.stringify(SEED_STUDENTS[0]));
+        setUser(null);
       }
       setLoading(false);
     }
@@ -108,30 +84,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, selectedRole: UserRole = 'student') => {
+  const register = async (profileData: Partial<Profile> & { password?: string }) => {
     setLoading(true);
     try {
-      if (isSupabaseConfigured && supabase) {
-        // Sign in via Supabase magic link / auth
-        const { error } = await supabase.auth.signInWithOtp({ email });
-        if (error) throw error;
-      } else {
-        // Standalone mock login based on email / role lookup
-        const profiles = dbStore.getProfiles();
-        let found = profiles.find(p => p.email.toLowerCase() === email.toLowerCase());
-        if (!found) {
-          found = {
-            id: 'user-' + Date.now(),
-            email,
-            full_name: email.split('@')[0],
-            role: selectedRole,
-            department: 'Computer Science & Engineering',
-            year: '4th Year',
-            register_number: '21CS' + Math.floor(100 + Math.random() * 899)
-          };
+      let registeredUser: Profile | null = null;
+      try {
+        const res = await api.register(profileData);
+        if (res && res.user) {
+          registeredUser = res.user;
         }
-        setUser(found);
-        localStorage.setItem('scc_current_user_v1', JSON.stringify(found));
+      } catch (err: any) {
+        // Fallback to local DB store if remote backend offline
+        const localProfiles = dbStore.getProfiles();
+        const existingEmail = localProfiles.find(p => p.email.toLowerCase() === profileData.email?.toLowerCase());
+        if (existingEmail) {
+          throw new Error('An account with this email address already exists.');
+        }
+        if (profileData.role === 'student' && profileData.register_number) {
+          const existingReg = localProfiles.find(p => p.role === 'student' && p.register_number?.toUpperCase() === profileData.register_number?.toUpperCase());
+          if (existingReg) {
+            throw new Error('A student with this Register Number already exists.');
+          }
+        }
+
+        const newId = (profileData.role === 'admin' ? 'admin-' : 'student-') + Date.now();
+        registeredUser = {
+          id: newId,
+          email: profileData.email || '',
+          full_name: profileData.full_name || '',
+          role: profileData.role || 'student',
+          register_number: profileData.register_number,
+          department: profileData.department || 'Computer Science & Engineering',
+          year: profileData.year || '4th Year',
+          section: profileData.section || 'A',
+          phone: profileData.phone || '',
+          dob: profileData.dob || '',
+          college_name: profileData.college_name || 'Smart Campus University'
+        };
+        dbStore.addProfile(registeredUser);
+      }
+
+      if (registeredUser) {
+        setUser(registeredUser);
+        localStorage.setItem('scc_current_user_v1', JSON.stringify(registeredUser));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email: string, password?: string, selectedRole: UserRole = 'student') => {
+    setLoading(true);
+    try {
+      let loggedUser: Profile | null = null;
+      try {
+        const res = await api.login({ email, password, role: selectedRole });
+        if (res && res.user) {
+          loggedUser = res.user;
+        }
+      } catch (err: any) {
+        // Local fallback lookup
+        const profiles = dbStore.getProfiles();
+        const found = profiles.find(p => p.email.toLowerCase() === email.toLowerCase());
+
+        if (found) {
+          if (found.role !== selectedRole) {
+            throw new Error(`This email belongs to a ${found.role} account, not ${selectedRole}.`);
+          }
+          loggedUser = found;
+        } else {
+          throw new Error('No account found with this email. Please register a new account.');
+        }
+      }
+
+      if (loggedUser) {
+        setUser(loggedUser);
+        localStorage.setItem('scc_current_user_v1', JSON.stringify(loggedUser));
       }
     } finally {
       setLoading(false);
@@ -163,9 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const updated = await academicService.updateProfile(user.id, updates);
     if (updated) {
       setUser(updated);
-      if (!isSupabaseConfigured) {
-        localStorage.setItem('scc_current_user_v1', JSON.stringify(updated));
-      }
+      localStorage.setItem('scc_current_user_v1', JSON.stringify(updated));
     }
   };
 
@@ -175,6 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: user?.role || null,
       loading,
       login,
+      register,
       loginAsDemoStudent,
       loginAsDemoAdmin,
       logout,

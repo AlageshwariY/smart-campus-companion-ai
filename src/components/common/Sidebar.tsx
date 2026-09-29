@@ -38,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
   const studentNav: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'attendance', label: 'Attendance Analytics', icon: CheckCircle2 },
     { id: 'academic', label: 'Academic & Courses', icon: BookOpen },
     { id: 'planner', label: 'AI Study Planner', icon: BrainCircuit, badge: 'AI' },
     { id: 'notes', label: 'AI Notes Analyzer', icon: FileCheck, badge: 'AI' },

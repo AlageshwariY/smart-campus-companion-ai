@@ -13,6 +13,9 @@ export interface Profile {
   section?: string;
   avatar_url?: string;
   phone?: string;
+  dob?: string;
+  college_name?: string;
+  password?: string;
   created_at?: string;
   updated_at?: string;
 }
